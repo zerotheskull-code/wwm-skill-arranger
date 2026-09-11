@@ -4,7 +4,7 @@ import { assignLanes, isBasicMove, moveKey, BASIC_MOVES, COUNTDOWN_BASIC, COUNTD
 import { usePlanner } from "@/lib/planner-store";
 import { cn } from "@/lib/utils";
 
-const PHASE_H = 18;
+const PHASE_H = 24;
 
 export function PreviewBoard() {
   const { opening, axes, phases, movePhase } = usePlanner();
@@ -13,7 +13,7 @@ export function PreviewBoard() {
   return (
     <div
       id="axis-preview"
-      className="w-fit max-w-full min-h-48 rounded-md bg-ink px-3 py-4"
+      className="w-fit max-w-full rounded-md bg-ink px-3 py-4"
     >
       {opening.dungeonName.trim() ||
       opening.tiangong ||
@@ -35,7 +35,7 @@ export function PreviewBoard() {
 
       {opening.countdownCount > 0 ? (
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-line bg-elevated px-2 py-0.5">
+          <span className="inline-flex items-center gap-1.5 rounded-sm border border-line bg-elevated px-2 py-1">
             <Clock className="size-4 text-cd" strokeWidth={2.2} />
             <span className="text-sm font-medium text-fg">
               {COUNTDOWN_OPTIONS.find((o) => o.value === opening.countdownCount)
@@ -58,7 +58,9 @@ export function PreviewBoard() {
       ) : null}
 
       <div className="flex flex-col gap-4">
-        {axes.map((axis) => (
+        {axes
+          .filter((axis) => axis.moves.length > 0)
+          .map((axis) => (
           <AxisPreview
             key={axis.id}
             axisId={axis.id}
@@ -83,7 +85,7 @@ function MetaChip({
   return (
     <span
       className={cn(
-        "rounded-xs border px-1.5 py-0.5 text-xs",
+        "rounded-xs border px-2 py-1 text-xs leading-none whitespace-nowrap",
         tone === "dungeon"
           ? "border-dungeon-edge bg-dungeon text-dungeon-fg"
           : "border-line bg-elevated text-muted",
@@ -110,7 +112,7 @@ function MoveBox({
       ref={moveRef}
       data-move={dataMove}
       className={cn(
-        "shrink-0 rounded-sm border px-1.5 py-0.5 text-[13px] font-medium leading-tight",
+        "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-sm border px-2 py-1 text-sm font-medium leading-none",
         basic
           ? "border-basic-edge bg-basic text-fg"
           : "border-line bg-elevated text-fg",
@@ -156,7 +158,7 @@ function AxisPreview({
       const r = el.getBoundingClientRect();
       const probe = document.createElement("span");
       probe.className =
-        "pointer-events-none absolute whitespace-nowrap rounded-xs bg-phase px-2.5 py-px text-[11px] leading-snug text-phase-fg";
+        "pointer-events-none absolute whitespace-nowrap rounded-xs bg-phase px-2.5 py-1 text-xs leading-none text-phase-fg";
       probe.textContent = text;
       probe.style.visibility = "hidden";
       wrap.appendChild(probe);
@@ -201,7 +203,7 @@ function AxisPreview({
       style={{ paddingTop: padTop }}
     >
       <div className="flex flex-nowrap items-center gap-2">
-        <div className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-axis text-xs font-bold text-fg">
+        <div className="inline-flex h-7 min-w-7 shrink-0 items-center justify-center rounded-sm bg-axis px-1.5 text-xs font-bold leading-none text-fg">
           {number || "•"}
         </div>
         {chunks.map((ch, ci) => (
@@ -236,7 +238,7 @@ function AxisPreview({
       {placed.map((p, i) => (
         <div
           key={`${p.text}-${i}`}
-          className="pointer-events-none absolute whitespace-nowrap rounded-xs bg-phase px-2.5 py-px text-[11px] leading-snug text-phase-fg"
+          className="pointer-events-none absolute whitespace-nowrap rounded-xs bg-phase px-2.5 py-1 text-xs leading-none text-phase-fg"
           style={{ left: p.left, top: p.top }}
         >
           {p.text}

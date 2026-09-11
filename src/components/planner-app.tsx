@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { Download, GripVertical, Plus, Trash2 } from "lucide-react";
 import {
   AXIS_MOVES,
   BASIC_MOVES,
@@ -15,6 +15,7 @@ import {
 } from "@/lib/planner";
 import { usePlanner } from "@/lib/planner-store";
 import { PreviewBoard } from "@/components/preview-board";
+import { downloadPreviewPng } from "@/lib/export-png";
 import { cn } from "@/lib/utils";
 
 export function PlannerApp() {
@@ -34,7 +35,10 @@ export function PlannerApp() {
             </div>
           </section>
           <section className="rounded-lg border border-line bg-surface p-4">
-            <h2 className="mb-3 text-sm font-medium text-muted">即時預覽</h2>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-medium text-muted">即時預覽</h2>
+              <ExportPngButton />
+            </div>
             <PreviewBoard />
           </section>
         </div>
@@ -312,6 +316,40 @@ function AddAxisButton() {
       <Plus className="size-4" />
       新增軸
     </button>
+  );
+}
+
+function ExportPngButton() {
+  const opening = usePlanner((s) => s.opening);
+  const axes = usePlanner((s) => s.axes);
+  const phases = usePlanner((s) => s.phases);
+  const movePhase = usePlanner((s) => s.movePhase);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  return (
+    <div className="flex items-center gap-2">
+      {err ? <span className="text-xs text-danger">{err}</span> : null}
+      <button
+        type="button"
+        disabled={busy}
+        onClick={async () => {
+          setErr("");
+          setBusy(true);
+          try {
+            await downloadPreviewPng({ opening, axes, phases, movePhase });
+          } catch {
+            setErr("匯出失敗，請再試一次");
+          } finally {
+            setBusy(false);
+          }
+        }}
+        className="inline-flex h-9 items-center gap-1.5 rounded-sm bg-accent px-3 text-sm font-medium text-accent-fg disabled:opacity-60"
+      >
+        <Download className="size-4" />
+        {busy ? "匯出中…" : "下載 PNG"}
+      </button>
+    </div>
   );
 }
 

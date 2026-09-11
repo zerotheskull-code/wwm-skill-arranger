@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Noto Sans TC", "Segoe UI", "PingFang TC", "Microsoft JhengHei",
-    system-ui, sans-serif;
+  --font-sans: "Microsoft JhengHei", "PingFang TC", "WenQuanYi Zen Hei",
+    "Noto Sans TC", "Segoe UI", system-ui, sans-serif;
 
   --color-ink: #0a0b0d;
   --color-surface: #13151a;
