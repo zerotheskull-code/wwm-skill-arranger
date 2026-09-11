@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Noto Sans TC", "Segoe UI", "PingFang TC", "Microsoft JhengHei",
+    system-ui, sans-serif;
+
+  --color-ink: #0a0b0d;
+  --color-surface: #13151a;
+  --color-elevated: #1a1d24;
+  --color-well: #101218;
+  --color-fg: #eceef2;
+  --color-muted: #9aa0ab;
+  --color-subtle: #6e7480;
+  --color-line: #2a2f3a;
+  --color-accent: #c5cbd6;
+  --color-accent-fg: #0a0b0d;
+  --color-axis: #4f8cff;
+  --color-axis-well: #16233c;
+  --color-basic: #6b4fcf;
+  --color-basic-edge: #8b6fff;
+  --color-phase: #2d3a4f;
+  --color-phase-fg: #c3cddc;
+  --color-danger: #e07a7a;
+  --color-danger-bg: #3a2222;
+  --color-danger-edge: #5a3030;
+  --color-cd: #d4a017;
+  --color-dungeon: #9b1c1c;
+  --color-dungeon-edge: #c23a3a;
+  --color-dungeon-fg: #ffe8e8;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100%;
+    background: var(--color-ink);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+  }
+
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

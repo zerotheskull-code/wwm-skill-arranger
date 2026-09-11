@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>燕雲競速排軸器</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #1a1d24;
+      --border: #2c313c;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --accent: #4f8cff;
+      --phase: #2d3a4f;
+      --move-bg: #252a35;
+      --move-border: #3d4658;
+      --number-bg: #4f8cff;
+      --basic-move: #6b4fcf;
+      --basic-move-border: #8b6fff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .panel h2 {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    textarea, input[type="text"] {
+      background: #12151b;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 8px 10px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    textarea:focus, input:focus { border-color: var(--accent); }
+
+    textarea {
+      width: 100%;
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    .section { margin-bottom: 16px; }
+
+    /* ===== 階段獨立工具 ===== */
+    .phase-tool {
+      background: #141820;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .phase-tool-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .phase-tool-header span {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .phase-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .phase-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1a1f2a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
+
+    .phase-item.dragging { opacity: 0.55; }
+
+    .phase-handle {
+      cursor: grab;
+      color: var(--muted);
+      font-size: 1rem;
+      padding: 2px 4px;
+      user-select: none;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .phase-handle:active { cursor: grabbing; }
+    .phase-handle:hover { color: var(--accent); background: #252b3a; }
+
+    .phase-item input {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 8px;
+    }
+
+    .phase-meta {
+      font-size: 0.72rem;
+      color: var(--muted);
+      white-space: nowrap;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ===== 軸區塊 ===== */
+    .row-block {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .row-editor {
+      flex: 1;
+      min-width: 0;
+      background: #12151b;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .row-delete {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .axis-moves {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .axis-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* 軸數字：更明顯可編輯 */
+    .axis-wrap input {
+      width: 42px;
+      text-align: center;
+      padding: 6px 4px;
+      background: #1a2a4a;
+      border: 2px solid var(--number-bg);
+      color: #fff;
+      font-weight: 700;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: text;
+      box-shadow: 0 0 0 1px rgba(79, 140, 255, 0.25);
+    }
+
+    .axis-wrap input:hover {
+      border-color: #7aa8ff;
+      background: #1e3258;
+    }
+
+    .axis-wrap input:focus {
+      border-color: #a0c0ff;
+      background: #243a62;
+      outline: none;
+    }
+
+    .moves {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      flex: 1;
+    }
+
+    .move-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--move-bg);
+      border: 1px solid var(--move-border);
+      border-radius: 8px;
+      padding: 4px 8px 4px 10px;
+      font-size: 0.85rem;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+
+    .move-tag.basic-move {
+      background: var(--basic-move);
+      border-color: var(--basic-move-border);
+    }
+
+    .move-tag.drop-target {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.35);
+    }
+
+    .move-tag.has-phase {
+      box-shadow: 0 0 0 1px rgba(122, 162, 255, 0.6);
+    }
+
+    .move-tag button {
+      background: transparent;
+      border: none;
+      color: #ff8a8a;
+      cursor: pointer;
+      font-size: 0.85rem;
+      line-height: 1;
+      padding: 0 2px;
+    }
+
+    .moves-arrow {
+      color: #6b7280;
+      font-size: 0.95rem;
+      user-select: none;
+    }
+
+    .move-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .move-picker button {
+      background: #1e2430;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .move-picker button:hover {
+      border-color: var(--accent);
+      background: #252b3a;
+    }
+
+    .move-picker button.basic-pick {
+      background: #3d2a6b;
+      border-color: var(--basic-move-border);
+    }
+
+    .move-picker button.basic-pick:hover {
+      background: #4a3580;
+    }
+
+    .move-picker .custom-btn {
+      border-style: dashed;
+      color: var(--muted);
+    }
+
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn:hover { filter: brightness(1.1); }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-danger {
+      background: #3a2222;
+      color: #ff8a8a;
+      border: 1px solid #5a3030;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+
+    .btn-danger:hover { background: #4a2a2a; }
+
+    .btn-small {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+    }
+
+    .add-axis-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 8px 0 4px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== 預覽 ===== */
+    #preview {
+      background: #0b0d11;
+      border-radius: 12px;
+      padding: 20px;
+      min-height: 200px;
+    }
+
+    .preview-notes {
+      background: #1a2030;
+      border: 1px dashed #3a455c;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+      color: #c5cad3;
+      white-space: pre-wrap;
+      min-height: 40px;
+    }
+
+    .preview-notes:empty::before {
+      content: "（開局注意事項預留區）";
+      color: #5c6575;
+    }
+
+    .preview-row { margin-bottom: 18px; }
+
+    .preview-combo-wrap { position: relative; }
+
+    .preview-combo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+
+    /* 基礎招式群組：緊密無箭頭 */
+    .preview-combo .basic-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .preview-number {
+      background: var(--number-bg);
+      color: white;
+      font-weight: 700;
+      font-size: 0.85rem;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .preview-move {
+      background: var(--move-bg);
+      border: 1px solid var(--move-border);
+      color: var(--text);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .preview-move.basic-move {
+      background: var(--basic-move);
+      border-color: var(--basic-move-border);
+    }
+
+    .preview-arrow {
+      color: #6b7280;
+      font-size: 0.95rem;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .preview-phase {
+      position: absolute;
+      left: 0;
+      background: var(--phase);
+      color: #b8c4d8;
+      font-size: 0.72rem;
+      padding: 1px 10px;
+      border-radius: 3px;
+      line-height: 1.35;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <h1>燕雲競速排軸器</h1>
+
+  <div class="layout">
+    <div class="panel">
+      <div class="section">
+        <div style="margin-bottom: 6px;">
+          <label>開局注意事項：</label>
+        </div>
+        <textarea id="notesInput" placeholder="例如：開場先吃紅、注意BOSS前搖..."></textarea>
+      </div>
+
+      <div class="phase-tool">
+        <div class="phase-tool-header">
+          <span>階段（可拖到下方任一招式上，每個招式最多一個）</span>
+          <button type="button" class="btn btn-small" id="btnAddPhase">＋ 新增階段</button>
+        </div>
+        <div class="phase-list" id="phaseList"></div>
+      </div>
+
+      <div id="rowsContainer"></div>
+
+      <div class="add-axis-wrap">
+        <button type="button" class="btn" id="btnAddRow">＋ 新增軸</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>即時預覽</h2>
+      <div id="preview"></div>
+      <div class="actions" style="margin-top: 12px;">
+        <button type="button" class="btn btn-secondary" id="btnRefreshPreview">重新整理預覽</button>
+        <button type="button" class="btn" id="btnDownload">下載圖片（下一版）</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 招式清單（順序依需求）
+    const MOVE_OPTIONS = [
+      "Q", "H", "L", "掛",
+      "龍捲", "挑飛", "風墻",
+      "3連", "5連",
+      "騎1", "騎2",
+      "蛤蟆", "笛", "葉龍",
+      "矢1", "矢2",
+      "短火", "長火", "5拳", "卸"
+    ];
+
+    const BASIC_MOVES = new Set(["Q", "H", "L", "掛"]);
+
+    let phaseIdSeq = 1;
+    let phases = [];
+    // 預設兩軸
+    let rows = [
+      { number: "1", moves: ["Q", "Q", "H", "L", "掛"] },
+      { number: "2", moves: ["Q", "H", "L", "掛"] }
+    ];
+    let movePhase = {};
+    let phaseLocation = {};
+    let draggingPhaseId = null;
+
+    function keyOf(r, m) { return r + ":" + m; }
+
+    function isBasic(move) {
+      return BASIC_MOVES.has(move);
+    }
+
+    function addPhase() {
+      const id = "p" + (phaseIdSeq++);
+      phases.push({ id: id, text: "" });
+      renderPhases();
+    }
+
+    function removePhase(id) {
+      phases = phases.filter(function (p) { return p.id !== id; });
+      var loc = phaseLocation[id];
+      if (loc) {
+        delete movePhase[loc];
+        delete phaseLocation[id];
+      }
+      renderPhases();
+      renderEditor();
+      renderPreview();
+    }
+
+    // 只更新資料與預覽，不重繪整個階段列表（避免輸入失焦）
+    function updatePhaseText(id, text) {
+      var p = phases.find(function (x) { return x.id === id; });
+      if (p) p.text = text;
+      // 只更新該列的 meta 顯示
+      var meta = document.querySelector('[data-phase-meta="' + id + '"]');
+      if (meta) {
+        meta.textContent = describeLocation(phaseLocation[id]);
+        meta.title = describeLocation(phaseLocation[id]);
+      }
+      renderPreview();
+    }
+
+    function assignPhaseToMove(phaseId, rowIndex, moveIndex) {
+      var k = keyOf(rowIndex, moveIndex);
+      var oldPhaseOnMove = movePhase[k];
+      if (oldPhaseOnMove && oldPhaseOnMove !== phaseId) {
+        delete phaseLocation[oldPhaseOnMove];
+      }
+      var oldLoc = phaseLocation[phaseId];
+      if (oldLoc) delete movePhase[oldLoc];
+      movePhase[k] = phaseId;
+      phaseLocation[phaseId] = k;
+      renderPhases();
+      renderEditor();
+      renderPreview();
+    }
+
+    function addRow() {
+      rows.push({ number: String(rows.length + 1), moves: [] });
+      renderEditor();
+      renderPreview();
+    }
+
+    function removeRow(index) {
+      var newMovePhase = {};
+      var newPhaseLocation = {};
+      Object.keys(movePhase).forEach(function (k) {
+        var parts = k.split(":");
+        var r = Number(parts[0]);
+        var m = Number(parts[1]);
+        if (r === index) return;
+        var nr = r > index ? r - 1 : r;
+        var nk = keyOf(nr, m);
+        newMovePhase[nk] = movePhase[k];
+        newPhaseLocation[movePhase[k]] = nk;
+      });
+      movePhase = newMovePhase;
+      phaseLocation = newPhaseLocation;
+      rows.splice(index, 1);
+      rows.forEach(function (r, i) { r.number = String(i + 1); });
+      renderPhases();
+      renderEditor();
+      renderPreview();
+    }
+
+    function addMove(rowIndex, moveName) {
+      rows[rowIndex].moves.push(moveName);
+      renderEditor();
+      renderPreview();
+    }
+
+    function addCustomMove(rowIndex) {
+      var name = window.prompt("請輸入自訂招式名稱：");
+      if (name && name.trim()) {
+        rows[rowIndex].moves.push(name.trim());
+        renderEditor();
+        renderPreview();
+      }
+    }
+
+    function removeMove(rowIndex, moveIndex) {
+      var next = {};
+      var nextLoc = Object.assign({}, phaseLocation);
+      Object.keys(movePhase).forEach(function (k) {
+        var parts = k.split(":");
+        var r = Number(parts[0]);
+        var m = Number(parts[1]);
+        if (r !== rowIndex) {
+          next[k] = movePhase[k];
+          return;
+        }
+        if (m === moveIndex) {
+          delete nextLoc[movePhase[k]];
+          return;
+        }
+        var nm = m > moveIndex ? m - 1 : m;
+        var nk = keyOf(r, nm);
+        next[nk] = movePhase[k];
+        nextLoc[movePhase[k]] = nk;
+      });
+      movePhase = next;
+      phaseLocation = nextLoc;
+      rows[rowIndex].moves.splice(moveIndex, 1);
+      renderPhases();
+      renderEditor();
+      renderPreview();
+    }
+
+    function updateNumber(rowIndex, value) {
+      rows[rowIndex].number = value;
+      renderPreview();
+    }
+
+    function escapeHtml(text) {
+      var div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function getPhaseText(id) {
+      var p = phases.find(function (x) { return x.id === id; });
+      return p ? p.text : "";
+    }
+
+    function describeLocation(k) {
+      if (!k) return "未放置";
+      var parts = k.split(":");
+      var r = Number(parts[0]);
+      var m = Number(parts[1]);
+      var row = rows[r];
+      if (!row || !row.moves[m]) return "未放置";
+      return "軸" + row.number + " · " + row.moves[m];
+    }
+
+    function onPhaseDragStart(e, phaseId) {
+      draggingPhaseId = phaseId;
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", phaseId);
+      var item = e.target.closest(".phase-item");
+      if (item) item.classList.add("dragging");
+    }
+
+    function onPhaseDragEnd() {
+      draggingPhaseId = null;
+      document.querySelectorAll(".phase-item.dragging").forEach(function (el) {
+        el.classList.remove("dragging");
+      });
+      document.querySelectorAll(".move-tag.drop-target").forEach(function (el) {
+        el.classList.remove("drop-target");
+      });
+    }
+
+    function onMoveDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      e.currentTarget.classList.add("drop-target");
+    }
+
+    function onMoveDragLeave(e) {
+      e.currentTarget.classList.remove("drop-target");
+    }
+
+    function onMoveDrop(e, rowIndex, moveIndex) {
+      e.preventDefault();
+      e.currentTarget.classList.remove("drop-target");
+      var phaseId = draggingPhaseId || e.dataTransfer.getData("text/plain");
+      if (!phaseId) return;
+      assignPhaseToMove(phaseId, rowIndex, moveIndex);
+      draggingPhaseId = null;
+    }
+
+    function renderPhases() {
+      var list = document.getElementById("phaseList");
+      list.innerHTML = "";
+
+      if (phases.length === 0) {
+        list.innerHTML = '<div style="color:#5c6575;font-size:0.85rem">尚未新增階段</div>';
+        return;
+      }
+
+      phases.forEach(function (p) {
+        var loc = phaseLocation[p.id];
+        var item = document.createElement("div");
+        item.className = "phase-item";
+
+        var handle = document.createElement("span");
+        handle.className = "phase-handle";
+        handle.draggable = true;
+        handle.title = "拖到招式上";
+        handle.textContent = "✥";
+        handle.addEventListener("dragstart", function (e) { onPhaseDragStart(e, p.id); });
+        handle.addEventListener("dragend", onPhaseDragEnd);
+
+        var input = document.createElement("input");
+        input.type = "text";
+        input.value = p.text;
+        input.placeholder = "例如 氣竭、二階段";
+        input.addEventListener("input", function () {
+          updatePhaseText(p.id, input.value);
+        });
+
+        var meta = document.createElement("span");
+        meta.className = "phase-meta";
+        meta.setAttribute("data-phase-meta", p.id);
+        meta.title = describeLocation(loc);
+        meta.textContent = describeLocation(loc);
+
+        var del = document.createElement("button");
+        del.type = "button";
+        del.className = "btn-danger btn-small";
+        del.textContent = "刪";
+        del.addEventListener("click", function () { removePhase(p.id); });
+
+        item.appendChild(handle);
+        item.appendChild(input);
+        item.appendChild(meta);
+        item.appendChild(del);
+        list.appendChild(item);
+      });
+    }
+
+    function renderEditor() {
+      var container = document.getElementById("rowsContainer");
+      container.innerHTML = "";
+
+      rows.forEach(function (row, rowIndex) {
+        var block = document.createElement("div");
+        block.className = "row-block";
+
+        var editor = document.createElement("div");
+        editor.className = "row-editor";
+
+        var axisMoves = document.createElement("div");
+        axisMoves.className = "axis-moves";
+
+        var axisWrap = document.createElement("div");
+        axisWrap.className = "axis-wrap";
+        var axisLabel = document.createElement("label");
+        axisLabel.textContent = "軸：";
+        var axisInput = document.createElement("input");
+        axisInput.type = "text";
+        axisInput.value = row.number;
+        axisInput.title = "可自行修改軸編號";
+        axisInput.addEventListener("input", function () {
+          updateNumber(rowIndex, axisInput.value);
+        });
+        axisWrap.appendChild(axisLabel);
+        axisWrap.appendChild(axisInput);
+        axisMoves.appendChild(axisWrap);
+
+        var movesDiv = document.createElement("div");
+        movesDiv.className = "moves";
+
+        row.moves.forEach(function (move, moveIndex) {
+          var k = keyOf(rowIndex, moveIndex);
+          var has = !!movePhase[k];
+          var tag = document.createElement("span");
+          tag.className = "move-tag" + (has ? " has-phase" : "") + (isBasic(move) ? " basic-move" : "");
+          tag.addEventListener("dragover", onMoveDragOver);
+          tag.addEventListener("dragleave", onMoveDragLeave);
+          tag.addEventListener("drop", function (e) { onMoveDrop(e, rowIndex, moveIndex); });
+
+          var nameSpan = document.createElement("span");
+          nameSpan.textContent = move;
+          tag.appendChild(nameSpan);
+
+          var delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.title = "移除招式";
+          delBtn.textContent = "×";
+          delBtn.addEventListener("click", function () { removeMove(rowIndex, moveIndex); });
+          tag.appendChild(delBtn);
+
+          movesDiv.appendChild(tag);
+
+          if (moveIndex < row.moves.length - 1) {
+            var arrow = document.createElement("span");
+            arrow.className = "moves-arrow";
+            arrow.textContent = "›";
+            movesDiv.appendChild(arrow);
+          }
+        });
+
+        if (row.moves.length === 0) {
+          var empty = document.createElement("span");
+          empty.style.color = "#5c6575";
+          empty.style.fontSize = "0.85rem";
+          empty.textContent = "（尚未新增招式）";
+          movesDiv.appendChild(empty);
+        }
+
+        axisMoves.appendChild(movesDiv);
+        editor.appendChild(axisMoves);
+
+        var picker = document.createElement("div");
+        picker.className = "move-picker";
+        MOVE_OPTIONS.forEach(function (opt) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.textContent = opt;
+          if (isBasic(opt)) btn.className = "basic-pick";
+          btn.addEventListener("click", function () { addMove(rowIndex, opt); });
+          picker.appendChild(btn);
+        });
+        var customBtn = document.createElement("button");
+        customBtn.type = "button";
+        customBtn.className = "custom-btn";
+        customBtn.textContent = "自訂…";
+        customBtn.addEventListener("click", function () { addCustomMove(rowIndex); });
+        picker.appendChild(customBtn);
+        editor.appendChild(picker);
+
+        block.appendChild(editor);
+
+        var delWrap = document.createElement("div");
+        delWrap.className = "row-delete";
+        var delAxisBtn = document.createElement("button");
+        delAxisBtn.type = "button";
+        delAxisBtn.className = "btn-danger";
+        delAxisBtn.textContent = "刪軸";
+        delAxisBtn.addEventListener("click", function () { removeRow(rowIndex); });
+        delWrap.appendChild(delAxisBtn);
+        block.appendChild(delWrap);
+
+        container.appendChild(block);
+      });
+    }
+
+    /** 判斷兩招之間是否應省略箭頭（連續基礎招式） */
+    function shouldSkipArrow(moves, i) {
+      return isBasic(moves[i]) && isBasic(moves[i + 1]);
+    }
+
+    function renderPreview() {
+      var preview = document.getElementById("preview");
+      var notes = document.getElementById("notesInput").value.trim();
+
+      var html = '<div class="preview-notes">' + (notes ? escapeHtml(notes) : "") + "</div>";
+
+      rows.forEach(function (row, rowIndex) {
+        var moves = row.moves;
+        var stackLevel = moves.map(function () { return 0; });
+        for (var i = 0; i < moves.length; i++) {
+          var pid = movePhase[keyOf(rowIndex, i)];
+          if (!pid || !getPhaseText(pid).trim()) continue;
+          var prevPid = i > 0 ? movePhase[keyOf(rowIndex, i - 1)] : null;
+          if (i > 0 && prevPid && getPhaseText(prevPid).trim()) {
+            stackLevel[i] = stackLevel[i - 1] + 1;
+          } else {
+            stackLevel[i] = 0;
+          }
+        }
+        var maxStack = 0;
+        stackLevel.forEach(function (lv) { if (lv > maxStack) maxStack = lv; });
+        var hasAnyPhase = moves.some(function (_, mi) {
+          var id = movePhase[keyOf(rowIndex, mi)];
+          return id && getPhaseText(id).trim();
+        });
+        var phaseUnit = 18;
+        var topPad = hasAnyPhase ? (maxStack + 1) * phaseUnit + 4 : 0;
+
+        html += '<div class="preview-row">';
+        html += '<div class="preview-combo-wrap" style="padding-top:' + topPad + 'px" data-row="' + rowIndex + '">';
+        html += '<div class="preview-combo">';
+        html += '<div class="preview-number">' + escapeHtml(row.number || "•") + "</div>";
+
+        // 輸出招式；連續基礎招式之間不加箭頭，並用較小 gap 的 group 包起來
+        var i = 0;
+        while (i < moves.length) {
+          if (isBasic(moves[i])) {
+            // 吃掉一整段連續基礎招式
+            var j = i;
+            while (j < moves.length && isBasic(moves[j])) j++;
+            html += '<span class="basic-group">';
+            for (var k = i; k < j; k++) {
+              html += '<div class="preview-move basic-move" data-move="' + k + '">' +
+                escapeHtml(moves[k]) + "</div>";
+            }
+            html += "</span>";
+            if (j < moves.length) {
+              html += '<span class="preview-arrow">›</span>';
+            }
+            i = j;
+          } else {
+            html += '<div class="preview-move" data-move="' + i + '">' +
+              escapeHtml(moves[i]) + "</div>";
+            if (i < moves.length - 1) {
+              html += '<span class="preview-arrow">›</span>';
+            }
+            i++;
+          }
+        }
+
+        html += "</div>";
+
+        moves.forEach(function (move, moveIndex) {
+          var pid2 = movePhase[keyOf(rowIndex, moveIndex)];
+          var text = pid2 ? getPhaseText(pid2).trim() : "";
+          if (!text) return;
+          var level = stackLevel[moveIndex];
+          var top = topPad - (level + 1) * phaseUnit;
+          html += '<div class="preview-phase" data-row="' + rowIndex +
+            '" data-move="' + moveIndex + '" style="top:' + top + 'px">' +
+            escapeHtml(text) + "</div>";
+        });
+
+        html += "</div></div>";
+      });
+
+      preview.innerHTML = html;
+
+      preview.querySelectorAll(".preview-combo-wrap").forEach(function (wrap) {
+        var moveEls = wrap.querySelectorAll(".preview-move");
+        var wrapRect = wrap.getBoundingClientRect();
+        moveEls.forEach(function (moveEl) {
+          var moveIndex = Number(moveEl.getAttribute("data-move"));
+          var phaseEl = wrap.querySelector('.preview-phase[data-move="' + moveIndex + '"]');
+          if (!phaseEl) return;
+          var moveRect = moveEl.getBoundingClientRect();
+          phaseEl.style.left = (moveRect.left - wrapRect.left) + "px";
+        });
+      });
+    }
+
+    // 綁定頂部按鈕（避免 inline 被擋）
+    document.getElementById("btnAddPhase").addEventListener("click", addPhase);
+    document.getElementById("btnAddRow").addEventListener("click", addRow);
+    document.getElementById("btnRefreshPreview").addEventListener("click", renderPreview);
+    document.getElementById("btnDownload").addEventListener("click", function () {
+      alert("下一版加入下載圖片");
+    });
+    document.getElementById("notesInput").addEventListener("input", renderPreview);
+
+    renderPhases();
+    renderEditor();
+    renderPreview();
+  </script>
+</body>
+</html>

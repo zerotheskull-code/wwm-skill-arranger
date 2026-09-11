@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "燕雲競速排軸器",
+      "hasCanvas": false,
+      "bodyTextLen": 440,
+      "bodyTextHash": "997f4bcfa6fd4548578b01098174673dd022d0d9d244823933b2d151fe7159f9",
+      "bodyTextPrefix": "燕雲競速排軸器 開局注意事項 天工： 選擇 純火 火毒 純毒 毒火 符帖： 無 鬼掣帖 蝕淵帖 存煞帖 行藏帖 懸解帖 明鑒帖 ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "燕雲競速排軸器",
+      "hasCanvas": false,
+      "bodyTextLen": 440,
+      "bodyTextHash": "997f4bcfa6fd4548578b01098174673dd022d0d9d244823933b2d151fe7159f9",
+      "bodyTextPrefix": "燕雲競速排軸器 開局注意事項 天工： 選擇 純火 火毒 純毒 毒火 符帖： 無 鬼掣帖 蝕淵帖 存煞帖 行藏帖 懸解帖 明鑒帖 ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
