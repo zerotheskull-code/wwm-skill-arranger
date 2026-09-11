@@ -91,16 +91,18 @@ function OpeningBlock() {
     setTiangong,
     setFutie,
     setXinfa,
+    addCustomTag,
+    setCustomTag,
+    removeCustomTag,
   } = usePlanner();
 
   return (
     <div className="mb-4 space-y-3">
-      <FieldLabel>開局注意事項</FieldLabel>
       <div className="flex flex-wrap items-center gap-2">
         <input
           value={opening.dungeonName}
           onChange={(e) => setDungeonName(e.target.value)}
-          placeholder="副本名稱"
+          placeholder="副本/軸名稱"
           className="h-9 min-w-40 flex-1 rounded-sm border border-line bg-well px-3 text-sm text-fg outline-none placeholder:text-subtle focus:border-accent"
         />
         <div className="flex items-center gap-1.5">
@@ -129,6 +131,31 @@ function OpeningBlock() {
             options={XINFA_OPTIONS.map((o) => ({ value: o, label: o }))}
           />
         </div>
+        {opening.customTags.map((tag, i) => (
+          <div key={i} className="flex items-center gap-1">
+            <input
+              value={tag}
+              placeholder="自定標籤"
+              onChange={(e) => setCustomTag(i, e.target.value)}
+              className="h-9 w-28 rounded-sm border border-line bg-well px-2 text-sm text-fg outline-none placeholder:text-subtle focus:border-accent"
+            />
+            <button
+              type="button"
+              className="text-danger"
+              aria-label="刪除標籤"
+              onClick={() => removeCustomTag(i)}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={addCustomTag}
+          className="inline-flex h-9 items-center rounded-sm border border-dashed border-line px-2.5 text-xs text-muted hover:border-accent"
+        >
+          +自定標籤
+        </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

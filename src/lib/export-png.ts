@@ -146,7 +146,7 @@ export function renderPreviewCanvas(snap: PreviewSnapshot) {
   const chipH = 22;
   const moveH = 26;
   const axisN = 26;
-  const phaseH = 20;
+  const phaseH = 15;
   const pad = 12;
   const gap = 6;
 
@@ -179,6 +179,16 @@ export function renderPreviewCanvas(snap: PreviewSnapshot) {
   if (opening.xinfa) {
     chips.push({
       text: opening.xinfa,
+      bg: C.elevated,
+      fg: C.muted,
+      border: C.line,
+    });
+  }
+  for (const tag of opening.customTags) {
+    const text = tag.trim();
+    if (!text) continue;
+    chips.push({
+      text,
       bg: C.elevated,
       fg: C.muted,
       border: C.line,
@@ -242,7 +252,7 @@ export function renderPreviewCanvas(snap: PreviewSnapshot) {
       lane: lanes[i] ?? 0,
     }));
     const maxLane = placed.length ? Math.max(0, ...placed.map((p) => p.lane)) : -1;
-    const phasePad = maxLane >= 0 ? (maxLane + 1) * (phaseH + 4) : 0;
+    const phasePad = maxLane >= 0 ? (maxLane + 1) * (phaseH + 2) : 0;
     return { axis, chunks, moveW, lefts, rowW, placed, phasePad };
   });
 
@@ -258,7 +268,7 @@ export function renderPreviewCanvas(snap: PreviewSnapshot) {
   if (hasMeta) contentH += chipH + 10;
   if (hasCd) contentH += 28 + 10;
   axisLayouts.forEach((a, i) => {
-    contentH += a.phasePad + moveH + (i < axisLayouts.length - 1 ? 16 : 0);
+    contentH += a.phasePad + moveH + (i < axisLayouts.length - 1 ? 2 : 0);
   });
   if (contentH === 0) contentH = 40;
 
@@ -376,7 +386,7 @@ export function renderPreviewCanvas(snap: PreviewSnapshot) {
     });
 
     layout.placed.forEach((p) => {
-      const top = rowY - (p.lane + 1) * (phaseH + 4);
+      const top = rowY - (p.lane + 1) * (phaseH + 2);
       fillChip(
         ctx,
         p.text,
@@ -387,11 +397,11 @@ export function renderPreviewCanvas(snap: PreviewSnapshot) {
         C.phaseFg,
         C.phase,
         8,
-        4,
+        2,
       );
     });
 
-    y += moveH + (i < axisLayouts.length - 1 ? 16 : 0);
+    y += moveH + (i < axisLayouts.length - 1 ? 2 : 0);
   });
 
   return canvas;

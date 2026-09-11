@@ -4,7 +4,7 @@ import { assignLanes, isBasicMove, moveKey, BASIC_MOVES, COUNTDOWN_BASIC, COUNTD
 import { usePlanner } from "@/lib/planner-store";
 import { cn } from "@/lib/utils";
 
-const PHASE_H = 24;
+const PHASE_H = 16;
 
 export function PreviewBoard() {
   const { opening, axes, phases, movePhase } = usePlanner();
@@ -18,7 +18,8 @@ export function PreviewBoard() {
       {opening.dungeonName.trim() ||
       opening.tiangong ||
       (opening.futie && opening.futie !== "無") ||
-      opening.xinfa ? (
+      opening.xinfa ||
+      opening.customTags.some((t) => t.trim()) ? (
         <div className="mb-3 flex w-fit max-w-full flex-wrap items-center gap-1.5">
           {opening.dungeonName.trim() ? (
             <MetaChip tone="dungeon">{opening.dungeonName.trim()}</MetaChip>
@@ -30,6 +31,12 @@ export function PreviewBoard() {
             <MetaChip>{opening.futie}</MetaChip>
           ) : null}
           {opening.xinfa ? <MetaChip>{opening.xinfa}</MetaChip> : null}
+          {opening.customTags
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .map((t, i) => (
+              <MetaChip key={`${t}-${i}`}>{t}</MetaChip>
+            ))}
         </div>
       ) : null}
 
@@ -57,7 +64,7 @@ export function PreviewBoard() {
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-0.5">
         {axes
           .filter((axis) => axis.moves.length > 0)
           .map((axis) => (
@@ -158,7 +165,7 @@ function AxisPreview({
       const r = el.getBoundingClientRect();
       const probe = document.createElement("span");
       probe.className =
-        "pointer-events-none absolute whitespace-nowrap rounded-xs bg-phase px-2.5 py-1 text-xs leading-none text-phase-fg";
+        "pointer-events-none absolute whitespace-nowrap rounded-xs bg-phase px-2 py-px text-[11px] leading-none text-phase-fg";
       probe.textContent = text;
       probe.style.visibility = "hidden";
       wrap.appendChild(probe);
@@ -238,7 +245,7 @@ function AxisPreview({
       {placed.map((p, i) => (
         <div
           key={`${p.text}-${i}`}
-          className="pointer-events-none absolute whitespace-nowrap rounded-xs bg-phase px-2.5 py-1 text-xs leading-none text-phase-fg"
+          className="pointer-events-none absolute whitespace-nowrap rounded-xs bg-phase px-2 py-px text-[11px] leading-none text-phase-fg"
           style={{ left: p.left, top: p.top }}
         >
           {p.text}

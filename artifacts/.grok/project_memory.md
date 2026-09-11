@@ -1,3 +1,0 @@
-- Building 燕雲競速排軸器: web tool for game combo/axis planning; generates shareable tip layouts for pin-image overlays. Single HTML file at artifacts/燕雲競速排軸器.html [2026-09-11]
-- Moves list: Q H L 掛 (purple/basic), 龍捲 挑飛 風墻 3連 5連 騎1 騎2 蛤蟆 笛 葉龍 矢1 矢2 短火 長火 5拳 卸; consecutive Q/H/L/掛 omit arrows in preview [2026-09-11]
-- Default axes: 1) Q Q H L 掛  2) Q H L 掛; phases are independent tool dragged onto moves (one phase per move) [2026-09-11]

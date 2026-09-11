@@ -19,8 +19,10 @@ export const AXIS_MOVES = [
   "短火",
   "長火",
   "5拳",
+  "解",
   "鐘",
   "卸",
+  "閃",
 ] as const;
 
 export const BASIC_MOVES = new Set(["Q", "H", "L", "飛天", "掛"]);
@@ -71,6 +73,7 @@ export type Opening = {
   tiangong: string;
   futie: string;
   xinfa: string;
+  customTags: string[];
 };
 
 export function isBasicMove(name: string, set: Set<string> = BASIC_MOVES) {

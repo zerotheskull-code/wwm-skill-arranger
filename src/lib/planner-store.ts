@@ -25,6 +25,9 @@ type PlannerState = {
   setTiangong: (v: string) => void;
   setFutie: (v: string) => void;
   setXinfa: (v: string) => void;
+  addCustomTag: () => void;
+  setCustomTag: (index: number, text: string) => void;
+  removeCustomTag: (index: number) => void;
   addPhase: () => void;
   removePhase: (id: string) => void;
   setPhaseText: (id: string, text: string) => void;
@@ -45,6 +48,7 @@ const defaultOpening: Opening = {
   tiangong: "",
   futie: "無",
   xinfa: "",
+  customTags: [],
 };
 
 const defaultPhases: Phase[] = [
@@ -114,6 +118,29 @@ export const usePlanner = create<PlannerState>((set, get) => ({
     set({ opening: { ...get().opening, tiangong } }),
   setFutie: (futie) => set({ opening: { ...get().opening, futie } }),
   setXinfa: (xinfa) => set({ opening: { ...get().opening, xinfa } }),
+  addCustomTag: () =>
+    set({
+      opening: {
+        ...get().opening,
+        customTags: [...get().opening.customTags, ""],
+      },
+    }),
+  setCustomTag: (index, text) =>
+    set({
+      opening: {
+        ...get().opening,
+        customTags: get().opening.customTags.map((t, i) =>
+          i === index ? text : t,
+        ),
+      },
+    }),
+  removeCustomTag: (index) =>
+    set({
+      opening: {
+        ...get().opening,
+        customTags: get().opening.customTags.filter((_, i) => i !== index),
+      },
+    }),
 
   addPhase: () =>
     set({ phases: [...get().phases, { id: uid("p"), text: "" }] }),

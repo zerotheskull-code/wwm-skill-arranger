@@ -173,7 +173,7 @@
     }
     .cd-count svg { color: var(--cd); }
     .cd-num { color: var(--cd); font-size: 11px; font-weight: 700; margin-right: 2px; font-variant-numeric: tabular-nums; }
-    .axis-preview { position: relative; margin-bottom: 16px; }
+    .axis-preview { position: relative; margin-bottom: 2px; }
     .combo { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; }
     .basic-group { display: inline-flex; align-items: center; gap: 2px; }
     .p-num {
@@ -191,8 +191,8 @@
     .p-move.basic { background: var(--basic); border-color: var(--basic-edge); }
     .p-phase {
       position: absolute; left: 0; pointer-events: none; white-space: nowrap;
-      background: var(--phase); color: var(--phase-fg); font-size: 0.75rem;
-      line-height: 1; padding: 4px 10px; border-radius: var(--r-xs);
+      background: var(--phase); color: var(--phase-fg); font-size: 11px;
+      line-height: 1; padding: 1px 8px; border-radius: var(--r-xs);
     }
     .hint { font-size: 0.8rem; color: var(--subtle); }
     .cd-count-input {
@@ -209,9 +209,8 @@
     <div class="layout">
       <section class="panel">
         <div class="opening">
-          <div class="lbl">開局注意事項</div>
-          <div class="row">
-            <input id="dungeonName" type="text" placeholder="副本名稱" style="min-width:160px;flex:1" />
+          <div class="row" id="metaRow">
+            <input id="dungeonName" type="text" placeholder="副本/軸名稱" style="min-width:160px;flex:1" />
             <div class="field"><span class="lbl">天工：</span>
               <select id="tiangong">
                 <option value="">選擇</option>
@@ -240,6 +239,8 @@
                 <option value="所恨">所恨</option>
               </select>
             </div>
+            <span id="customTagFields" class="row"></span>
+            <button type="button" class="btn-ghost" id="btnAddTag" style="height:36px;padding:0 10px;font-size:0.75rem;border-style:dashed">+自定標籤</button>
           </div>
           <div class="row">
             <span class="lbl">倒數次數：</span>
@@ -282,7 +283,7 @@
   </div>
 
   <script>
-    const AXIS_MOVES = ["Q","H","L","飛天","掛","龍捲","挑飛","風墻","3連","5連","騎1","騎2","蛤蟆","笛","葉龍","矢1","矢2","短火","長火","5拳","鐘","卸"];
+    const AXIS_MOVES = ["Q","H","L","飛天","掛","龍捲","挑飛","風墻","3連","5連","騎1","騎2","蛤蟆","笛","葉龍","矢1","矢2","短火","長火","5拳","解","鐘","卸","閃"];
     const BASIC_MOVES = new Set(["Q","H","L","飛天","掛"]);
     const COUNTDOWN_MOVES = ["酒","笛","風墻","鵝","鐘","Q"];
     const COUNTDOWN_BASIC = new Set(["Q"]);
@@ -302,7 +303,7 @@
     function uid(p){ return p + "-" + (uidN++); }
 
     const state = {
-      opening: { dungeonName:"", countdownCount:0, countdownMoves:[], tiangong:"", futie:"無", xinfa:"" },
+      opening: { dungeonName:"", countdownCount:0, countdownMoves:[], tiangong:"", futie:"無", xinfa:"", customTags:[] },
       phases: [
         { id:"p-qijie", text:"氣竭" },
         { id:"p-phase2", text:"二階段" },
@@ -636,13 +637,16 @@
       var root = document.getElementById("preview-root");
       var o = state.opening;
       var html = "";
-      var hasMeta = o.dungeonName.trim() || o.tiangong || (o.futie && o.futie !== "無") || o.xinfa;
+      var hasMeta = o.dungeonName.trim() || o.tiangong || (o.futie && o.futie !== "無") || o.xinfa || o.customTags.some(function(t){ return t.trim(); });
       if (hasMeta){
         html += '<div class="meta-row">';
         if (o.dungeonName.trim()) html += '<span class="chip dungeon">' + escapeHtml(o.dungeonName.trim()) + "</span>";
         if (o.tiangong) html += '<span class="chip">天工' + escapeHtml(o.tiangong) + "</span>";
         if (o.futie && o.futie !== "無") html += '<span class="chip">' + escapeHtml(o.futie) + "</span>";
         if (o.xinfa) html += '<span class="chip">' + escapeHtml(o.xinfa) + "</span>";
+        o.customTags.forEach(function(t){
+          if (t.trim()) html += '<span class="chip">' + escapeHtml(t.trim()) + "</span>";
+        });
         html += "</div>";
       }
       if (o.countdownCount > 0){
@@ -697,8 +701,8 @@
         });
         var lanes = assignLanes(items);
         var maxLane = items.length ? Math.max.apply(null, lanes) : 0;
-        var PHASE_H = 24;
-        var pad = items.length ? (maxLane + 1) * PHASE_H + 4 : 0;
+        var PHASE_H = 16;
+        var pad = items.length ? (maxLane + 1) * PHASE_H + 2 : 0;
         wrap.style.paddingTop = pad + "px";
         items.forEach(function(it, i){
           var el = document.createElement("div");
@@ -748,12 +752,15 @@
       var measure = document.createElement("canvas").getContext("2d");
       var axes = state.axes.filter(function(a){ return a.moves.length; });
       var opening = state.opening;
-      var chipH = 22, moveH = 26, axisN = 26, phaseH = 20, pad = 12, gap = 6;
+      var chipH = 22, moveH = 26, axisN = 26, phaseH = 15, pad = 12, gap = 6;
       var chips = [];
       if (opening.dungeonName.trim()) chips.push({ text: opening.dungeonName.trim(), bg:C.dungeon, fg:C.dungeonFg, border:C.dungeonEdge });
       if (opening.tiangong) chips.push({ text: "天工"+opening.tiangong, bg:C.elevated, fg:C.muted, border:C.line });
       if (opening.futie && opening.futie !== "無") chips.push({ text: opening.futie, bg:C.elevated, fg:C.muted, border:C.line });
       if (opening.xinfa) chips.push({ text: opening.xinfa, bg:C.elevated, fg:C.muted, border:C.line });
+      opening.customTags.forEach(function(t){
+        if (t.trim()) chips.push({ text: t.trim(), bg:C.elevated, fg:C.muted, border:C.line });
+      });
       measure.font = FONT_SM;
       var metaW = 0;
       chips.forEach(function(c,i){ metaW += Math.ceil(measure.measureText(c.text).width) + 16 + (i?gap:0); });
@@ -793,7 +800,7 @@
         var lanes = assignLanes(items);
         var placed = items.map(function(it,i){ return { text:it.text, left:it.left, width:it.width, lane: lanes[i]||0 }; });
         var maxLane = placed.length ? Math.max.apply(null, placed.map(function(p){ return p.lane; })) : -1;
-        var phasePad = maxLane >= 0 ? (maxLane+1)*(phaseH+4) : 0;
+        var phasePad = maxLane >= 0 ? (maxLane+1)*(phaseH+2) : 0;
         return { axis:axis, chunks:chunks, moveW:moveW, lefts:lefts, rowW:x, placed:placed, phasePad:phasePad };
       });
       var contentW = Math.max(metaW, cdW, 40);
@@ -801,7 +808,7 @@
       var contentH = 0;
       if (chips.length) contentH += chipH + 10;
       if (opening.countdownCount > 0) contentH += 28 + 10;
-      axisLayouts.forEach(function(a,i){ contentH += a.phasePad + moveH + (i < axisLayouts.length-1 ? 16 : 0); });
+      axisLayouts.forEach(function(a,i){ contentH += a.phasePad + moveH + (i < axisLayouts.length-1 ? 2 : 0); });
       if (!contentH) contentH = 40;
       var W = Math.ceil(contentW + pad*2), H = Math.ceil(contentH + pad*2), scale = 2;
       var canvas = document.createElement("canvas");
@@ -868,9 +875,9 @@
           ctx.textAlign = "left";
         });
         layout.placed.forEach(function(p){
-          fillChip(ctx, p.text, pad+p.left, rowY-(p.lane+1)*(phaseH+4), FONT_SM, C.phase, C.phaseFg, C.phase, 8, 4);
+          fillChip(ctx, p.text, pad+p.left, rowY-(p.lane+1)*(phaseH+2), FONT_SM, C.phase, C.phaseFg, C.phase, 8, 2);
         });
-        y += moveH + (i < axisLayouts.length-1 ? 16 : 0);
+        y += moveH + (i < axisLayouts.length-1 ? 2 : 0);
       });
       return canvas;
     }
@@ -903,6 +910,41 @@
     document.getElementById("xinfa").addEventListener("change", function(e){
       state.opening.xinfa = e.target.value; renderPreview();
     });
+    function renderCustomTags(){
+      var box = document.getElementById("customTagFields");
+      box.innerHTML = "";
+      state.opening.customTags.forEach(function(t, i){
+        var wrap = document.createElement("span");
+        wrap.className = "field";
+        var input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "自定標籤";
+        input.value = t;
+        input.style.width = "112px";
+        input.addEventListener("input", function(){
+          state.opening.customTags[i] = input.value;
+          renderPreview();
+        });
+        var del = document.createElement("button");
+        del.type = "button";
+        del.className = "btn-danger btn-tiny";
+        del.textContent = "×";
+        del.addEventListener("click", function(){
+          state.opening.customTags.splice(i, 1);
+          renderCustomTags();
+          renderPreview();
+        });
+        wrap.appendChild(input);
+        wrap.appendChild(del);
+        box.appendChild(wrap);
+      });
+    }
+    document.getElementById("btnAddTag").addEventListener("click", function(){
+      state.opening.customTags.push("");
+      renderCustomTags();
+      var inputs = document.querySelectorAll("#customTagFields input");
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
     document.getElementById("countdownCount").addEventListener("change", function(e){
       var v = Number(e.target.value);
       state.opening.countdownCount = v;
@@ -926,6 +968,7 @@
     document.getElementById("btnAddRow").addEventListener("click", addAxis);
     document.getElementById("btnDownload").addEventListener("click", downloadPng);
 
+    renderCustomTags();
     renderPhases();
     renderEditor();
     renderPreview();
